@@ -1,10 +1,11 @@
-# TRMNL cloud firmware — device + shared cloud logic + TRMNL-specific display pages
+# Lilygo T5-ePaper-S3 cloud firmware
+# Device config + shared cloud logic + Lilygo-specific display pages
 packages:
-  device: !include devices/trmnl/trmnl.factory.yaml
+  device: !include devices/lilygo-t5-s3/lilygo.factory.yaml
   cloud: !include packages/trmnl-cloud.yaml
 
 esphome:
-  name: trmnl-cloud
+  name: lilygo-cloud
   # Dynamically set QR Code value for connecting to captive portal
   on_boot:
     - priority: 600
@@ -45,7 +46,7 @@ qr_code:
   - id: wifi_failed_qr
     value: "https://help.usetrmnl.com/en/articles/10193157-device-wifi-troubleshooting"
 
+# Minimal deep_sleep config so the cloud script's deep_sleep.enter action is registered.
+# run_duration is a fallback; the cloud script sets sleep_duration dynamically from the API.
 deep_sleep:
-  wakeup_pin:
-    number: GPIO2
-    inverted: true
+  run_duration: 5s

@@ -1,0 +1,97 @@
+# TRMNL hardware configuration
+# ESP32-C3 + Waveshare 7.50inv2 e-paper display (800x480 B&W)
+
+substitutions:
+  # Display properties (overridable by cloud wrapper)
+  display_width: "800"
+  display_height: "480"
+  image_resize: "800x480"
+  # Wakeup pin for deep sleep (GPIO2 on TRMNL)
+  wakeup_pin: GPIO2
+
+esphome:
+  name: trmnl
+  friendly_name: TRMNL
+  # Automatically add the mac address to the name
+  # so you can use a single firmware for all devices
+  name_add_mac_suffix: true
+
+esp32:
+  board: esp32-c3-devkitm-1
+  framework:
+    type: esp-idf
+
+# To be able to get logs from the device via serial and api.
+logger:
+
+# API is a requirement of the dashboard import.
+api:
+
+# OTA is required for Over-the-Air updating
+ota:
+  - platform: esphome
+
+wifi:
+  # Set up a wifi access point using the device name above
+  ap:
+
+# In combination with the `ap` this allows the user
+# to provision wifi credentials to the device.
+captive_portal:
+
+font:
+  - id: roboto_16
+    file: gfonts://Roboto
+    size: 16
+  - id: roboto_32
+    file: gfonts://Roboto
+    size: 32
+
+spi:
+  mosi_pin: GPIO8
+  clk_pin: GPIO7
+
+display:
+  platform: waveshare_epaper
+  id: trmnl_display
+  cs_pin: GPIO6
+  model: 7.50inv2
+  update_interval: 60s
+  dc_pin: GPIO5
+  reset_pin: GPIO10
+  busy_pin:
+    number: GPIO4
+    inverted: true
+  pages:
+    - id: main_page
+      lambda: |-
+        it.print(100, 100, id(roboto_32), "Hello ESPHome on TRMNL!");
+        it.printf(100, 200, id(roboto_32), "Uptime: %d seconds", millis() / 1000);
+
+        it.printf(750, 430, id(roboto_16), TextAlign::BOTTOM_RIGHT, "Battery: %.2fV", id(battery_voltage).state);
+    - id: blank_page
+      lambda: |-
+        it.fill(COLOR_ON);
+
+binary_sensor:
+  - platform: gpio
+    name: Button
+    id: back_button
+    pin:
+      number: GPIO9
+      inverted: true
+
+sensor:
+  - platform: adc
+    name: Battery Voltage
+    id: battery_voltage
+    pin: GPIO3
+    attenuation: 12db
+    samples: 128
+    filters:
+      - multiply: 2.0
+
+button:
+  - platform: restart
+    name: Restart
+    id: restart_button
