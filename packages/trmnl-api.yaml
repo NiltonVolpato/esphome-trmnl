@@ -23,20 +23,19 @@ globals:
 event:
   - id: !extend wifi_connected
     on_event:
-      - event_type: connected
-        then:
-          - delay: 16ms
-          - logger.log: "Checking for stored credentials..."
-          - if:
-              condition:
-                lambda: |-
-                  return id(device_id).empty() || id(api_key).empty();
-              then:
-                - logger.log: "No stored credentials, running setup"
-                - script.execute: trmnl_setup
-              else:
-                - logger.log: "Stored credentials found, running update"
-                - script.execute: trmnl_update
+      then:
+        - delay: 16ms
+        - logger.log: "Checking for stored credentials..."
+        - if:
+            condition:
+              lambda: |-
+                return id(device_id).empty() || id(api_key).empty();
+            then:
+              - logger.log: "No stored credentials, running setup"
+              - script.execute: trmnl_setup
+            else:
+              - logger.log: "Stored credentials found, running update"
+              - script.execute: trmnl_update
 
 http_request:
   buffer_size_tx: 2048
@@ -55,9 +54,9 @@ online_image:
       - delay: 100ms
       - logger.log:
           format: "Entering deep sleep for %d seconds"
-          args: ['id(sleep_time)']
+          args: ["id(sleep_time)"]
       - deep_sleep.enter:
-          sleep_duration: !lambda 'return id(sleep_time) * 1000;'
+          sleep_duration: !lambda "return id(sleep_time) * 1000;"
 
 sensor:
   - id: !extend battery_voltage
@@ -75,15 +74,14 @@ text_sensor:
     update_interval: never
 
 script:
-
-# /api/setup
-# {
-#     "api_key": "...",
-#     "friendly_id": "...",
-#     "image_url": "https://usetrmnl.com/images/setup/setup-logo.bmp",
-#     "message": "Register at usetrmnl.com/signup with Device ID '...'",
-#     "status": 200
-# }
+  # /api/setup
+  # {
+  #     "api_key": "...",
+  #     "friendly_id": "...",
+  #     "image_url": "https://usetrmnl.com/images/setup/setup-logo.bmp",
+  #     "message": "Register at usetrmnl.com/signup with Device ID '...'",
+  #     "status": 200
+  # }
   - id: trmnl_setup
     mode: single
     then:
@@ -91,7 +89,7 @@ script:
       - http_request.get:
           url: https://trmnl.app/api/setup
           request_headers:
-            ID: !lambda 'return id(mac_address_sensor).state.c_str();'
+            ID: !lambda "return id(mac_address_sensor).state.c_str();"
           capture_response: true
           on_response:
             - logger.log:
@@ -109,22 +107,21 @@ script:
                         global_preferences->sync();
                         return true;
                       });
-                  - delay: 16ms  # lets the http_request component free up the reserved memory
+                  - delay: 16ms # lets the http_request component free up the reserved memory
                   - logger.log: "Setup complete, starting update"
                   - script.execute: trmnl_update
 
-
-# /api/display
-# {
-#     "filename": "....bmp",
-#     "firmware_url": "https://trmnl.s3.us-east-2.amazonaws.com/FW1.4.5.bin",
-#     "image_url": "https://trmnl.s3.us-east-2.amazonaws.com/...",
-#     "refresh_rate": 903,
-#     "reset_firmware": false,
-#     "special_function": "identify",
-#     "status": 0,
-#     "update_firmware": null
-# }
+  # /api/display
+  # {
+  #     "filename": "....bmp",
+  #     "firmware_url": "https://trmnl.s3.us-east-2.amazonaws.com/FW1.4.5.bin",
+  #     "image_url": "https://trmnl.s3.us-east-2.amazonaws.com/...",
+  #     "refresh_rate": 903,
+  #     "reset_firmware": false,
+  #     "special_function": "identify",
+  #     "status": 0,
+  #     "update_firmware": null
+  # }
   - id: trmnl_update
     mode: single
     then:
@@ -132,9 +129,9 @@ script:
       - http_request.get:
           url: https://trmnl.app/api/display
           request_headers:
-            ID: !lambda 'return id(mac_address_sensor).state.c_str();'
-            Access-Token: !lambda 'return id(api_key).c_str();'
-            Battery-Voltage: !lambda 'return id(battery_voltage_text).state.c_str();'
+            ID: !lambda "return id(mac_address_sensor).state.c_str();"
+            Access-Token: !lambda "return id(api_key).c_str();"
+            Battery-Voltage: !lambda "return id(battery_voltage_text).state.c_str();"
           capture_response: true
           on_response:
             - logger.log:
@@ -148,6 +145,6 @@ script:
                   }
                   return true;
                 });
-            - delay: 16ms  # lets the http_request component free up the reserved memory
+            - delay: 16ms # lets the http_request component free up the reserved memory
             - logger.log: "Update complete, refreshing image"
             - component.update: trmnl_image
