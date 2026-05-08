@@ -34,14 +34,6 @@ api:
 ota:
   - platform: esphome
 
-wifi:
-  # Set up a wifi access point using the device name above
-  ap:
-
-# In combination with the `ap` this allows the user
-# to provision wifi credentials to the device.
-captive_portal:
-
 font:
   - id: sans_serif_normal
     file: gfonts://Open+Sans@500

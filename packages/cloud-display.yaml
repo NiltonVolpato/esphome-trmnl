@@ -1,23 +1,8 @@
-# Shared cloud display pages — QR code setup screen, logo, images, and wifi_setup script
-# Included by packages/cloud-firmware.yaml alongside a device config.
+# Shared cloud display pages — logo, trmnl_page, and trmnl_logo image.
+# WiFi-related pages (wifi_connect, wifi_failed, sleep_warning) live in modules/wifi.yaml.
+# Included by packages/cloud-firmware.yaml alongside a device config and the wifi module.
 
-globals:
-  - id: wifi_setup_attempt
-    type: int
-    restore_value: false
-    initial_value: '0'
-
-esphome:
-  on_boot:
-    - priority: -100
-      then:
-        - logger.log: "Booted, starting wifi_setup (18x10s poll, max 3 min)"
-        - script.execute: wifi_setup
-
-# TODO: Update to use `!extend`. This seems to work but it's confusing.
-#       There is a display here and another in device.yaml.
 display:
-  update_interval: never
   pages:
     - id: trmnl_page
       lambda: |-
@@ -25,84 +10,8 @@ display:
     - id: logo
       lambda: |-
         it.image(0, 0, id(trmnl_logo));
-    - id: wifi_connect
-      lambda: |-
-        int w = it.get_width();
-        int h = it.get_height();
-        // "Scan to connect" at top
-        it.printf(w / 2, 10, id(sans_serif_large), TextAlign::TOP_CENTER, "Scan to connect");
-        // QR code centered
-        int scale = 8;
-        auto size = id(wifi_connect_qr).get_size() * scale;
-        auto x = (w / 2) - (size / 2);
-        auto y = (h / 2) - (size / 2);
-        it.qr_code(x, y, id(wifi_connect_qr), COLOR_ON, scale);
-        // WiFi name at bottom
-        it.printf(w / 2, h - 15, id(sans_serif_normal), TextAlign::BOTTOM_CENTER, "WiFi: %s", App.get_name().c_str());
-    - id: wifi_failed
-      lambda: |-
-        int scale = 8;
-        auto size = id(wifi_failed_qr).get_size() * scale;
-        auto x = (it.get_width() / 2) - (size / 2);
-        auto y = (it.get_height() / 2) - (size / 2);
-        it.qr_code(x, y, id(wifi_failed_qr), COLOR_ON, scale);
-    - id: sleep_warning
-      lambda: |-
-        int w = it.get_width();
-        int h = it.get_height();
-        it.printf(w / 2, h / 2 - 60, id(sans_serif_large), TextAlign::CENTER, "Setup timeout");
-        it.printf(w / 2, h / 2 - 15, id(sans_serif_normal), TextAlign::CENTER, "Going to sleep...");
-        it.printf(w / 2, h / 2 + 30, id(sans_serif_normal), TextAlign::CENTER, "Press button to wake");
 
 image:
   - id: trmnl_logo
     file: static/logo.bmp
     type: BINARY
-
-qr_code:
-  - id: wifi_connect_qr
-    value: "WIFI:T:nopass;S:TRMNL;;"
-  - id: wifi_failed_qr
-    value: "https://help.usetrmnl.com/en/articles/10193157-device-wifi-troubleshooting"
-
-script:
-  - id: wifi_setup
-    mode: restart
-    then:
-      - logger.log: "wifi_setup: begin polling"
-      - lambda: "id(wifi_setup_attempt) = 0;"
-      - repeat:
-          count: 18
-          then:
-            - lambda: "id(wifi_setup_attempt)++;"
-            - logger.log:
-                format: "wifi_setup: iteration %d/18"
-                args: ['id(wifi_setup_attempt)']
-            - if:
-                condition: wifi.connected
-                then:
-                  - logger.log: "wifi_setup: WiFi already connected, exiting"
-                  - script.stop: wifi_setup
-            - logger.log: "wifi_setup: waiting 10s..."
-            - delay: 10s
-            - if:
-                condition: wifi.connected
-                then:
-                  - logger.log: "wifi_setup: WiFi connected after delay, exiting"
-                  - script.stop: wifi_setup
-            - if:
-                condition: wifi.ap_active
-                then:
-                  - logger.log: "wifi_setup: AP active, setting QR code and showing wifi_connect"
-                  - lambda: |-
-                      id(wifi_connect_qr).set_value("WIFI:T:nopass;S:" + App.get_name() + ";;");
-                  - display.page.show: wifi_connect
-                  - component.update: trmnl_display
-                  - script.stop: wifi_setup
-      - logger.log: "wifi_setup: timeout — no WiFi and no AP after 18 iterations"
-      - logger.log: "wifi_setup: showing sleep warning"
-      - display.page.show: sleep_warning
-      - component.update: trmnl_display
-      - delay: 1s
-      - logger.log: "wifi_setup: entering deep sleep"
-      - deep_sleep.enter:

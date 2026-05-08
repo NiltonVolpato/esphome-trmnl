@@ -1,0 +1,148 @@
+# WiFi module — self-contained WiFi setup, captive portal, polling scripts, and display screens.
+# Include this in any firmware that needs WiFi provisioning with QR code setup screens.
+#
+# Required substitutions (set by device config):
+#   wifi_ssid:     WiFi SSID (empty for AP-only)
+#   wifi_password: WiFi password (empty for open AP)
+#
+# Optional substitutions (overridable):
+#   wifi_setup_timeout:       how long to wait before deep-sleeping (default "180s")
+#   wifi_setup_poll_interval: delay between polling iterations (default "10s")
+
+substitutions:
+  # Credentials.
+  wifi_ssid: ""
+  wifi_password: ""
+
+  wifi_setup_timeout: "180s"
+  wifi_setup_poll_interval: "10s"
+
+  # provisioned_wifi: !include
+  #   file: wifi-provisioned.yaml
+
+# packages:
+#   provisioned_wifi_pkg: ${ provisioned_wifi if wifi_ssid else {} }
+
+wifi:
+  ap:
+
+  on_connect:
+    - logger.log: "WiFi connected — stopping wifi_setup and wifi_timeout"
+    - script.stop: wifi_setup
+    - script.stop: wifi_timeout
+    - event.trigger:
+        id: wifi_connected
+        event_type: connected
+    - logger.log: "Fired wifi_connected event"
+
+captive_portal:
+
+esphome:
+  on_boot:
+    - priority: -100
+      then:
+        - logger.log: "Booted, starting wifi_setup (18 iterations, ${wifi_setup_poll_interval} each) and wifi_timeout (${wifi_setup_timeout})"
+        - script.execute: wifi_setup
+        - script.execute: wifi_timeout
+
+event:
+  - platform: template
+    id: wifi_connected
+    internal: true
+    event_types:
+      - connected
+
+globals:
+  - id: wifi_setup_attempt
+    type: int
+    restore_value: false
+    initial_value: "0"
+
+script:
+  - id: wifi_setup
+    mode: single
+    then:
+      - logger.log: "wifi_setup: begin polling"
+      - lambda: "id(wifi_setup_attempt) = 0;"
+      - repeat:
+          count: 18 # 18 × ${wifi_setup_poll_interval} = ${wifi_setup_timeout}
+          then:
+            - lambda: "id(wifi_setup_attempt)++;"
+            - logger.log:
+                format: "wifi_setup: iteration %d/18"
+                args: ["id(wifi_setup_attempt)"]
+            - if:
+                condition: wifi.connected
+                then:
+                  - logger.log: "wifi_setup: WiFi already connected, exiting"
+                  - script.stop: wifi_setup
+            - delay: ${wifi_setup_poll_interval}
+            - if:
+                condition: wifi.connected
+                then:
+                  - logger.log: "wifi_setup: WiFi connected after delay, exiting"
+                  - script.stop: wifi_setup
+            - if:
+                condition: wifi.ap_active
+                then:
+                  - logger.log: "wifi_setup: AP active, setting QR code and showing wifi_connect"
+                  - lambda: |-
+                      id(wifi_connect_qr).set_value("WIFI:T:nopass;S:" + App.get_name() + ";;");
+                  - display.page.show: wifi_connect
+                  - component.update: trmnl_display
+                  - script.stop: wifi_setup
+      # Loop exhausted — wifi_timeout will handle the timeout case
+      - logger.log: "wifi_setup: loop exhausted, exiting cleanly"
+
+  - id: wifi_timeout
+    mode: single
+    then:
+      - logger.log: "wifi_timeout: waiting ${wifi_setup_timeout}..."
+      - delay: ${wifi_setup_timeout}
+      - if:
+          condition: wifi.ap_active
+          then:
+            - logger.log: "wifi_timeout: AP still active after ${wifi_setup_timeout} — showing sleep warning"
+            - display.page.show: sleep_warning
+            - component.update: trmnl_display
+            - logger.log: "wifi_timeout: entering deep sleep"
+            - deep_sleep.enter:
+          else:
+            - logger.log: "wifi_timeout: no longer in AP mode, exiting cleanly"
+
+display:
+  pages:
+    - id: wifi_connect
+      lambda: |-
+        int w = it.get_width();
+        int h = it.get_height();
+        // "Scan to connect" at top
+        it.printf(w / 2, 10, id(sans_serif_large), TextAlign::TOP_CENTER, "Scan to connect");
+        // QR code centered
+        int scale = 8;
+        auto size = id(wifi_connect_qr).get_size() * scale;
+        auto x = (w / 2) - (size / 2);
+        auto y = (h / 2) - (size / 2);
+        it.qr_code(x, y, id(wifi_connect_qr), COLOR_ON, scale);
+        // WiFi name at bottom
+        it.printf(w / 2, h - 15, id(sans_serif_normal), TextAlign::BOTTOM_CENTER, "WiFi: %s", App.get_name().c_str());
+    - id: wifi_failed
+      lambda: |-
+        int scale = 8;
+        auto size = id(wifi_failed_qr).get_size() * scale;
+        auto x = (it.get_width() / 2) - (size / 2);
+        auto y = (it.get_height() / 2) - (size / 2);
+        it.qr_code(x, y, id(wifi_failed_qr), COLOR_ON, scale);
+    - id: sleep_warning
+      lambda: |-
+        int w = it.get_width();
+        int h = it.get_height();
+        it.printf(w / 2, h / 2 - 60, id(sans_serif_large), TextAlign::CENTER, "Setup timeout");
+        it.printf(w / 2, h / 2 - 15, id(sans_serif_normal), TextAlign::CENTER, "Going to sleep...");
+        it.printf(w / 2, h / 2 + 30, id(sans_serif_normal), TextAlign::CENTER, "Press button to wake");
+
+qr_code:
+  - id: wifi_connect_qr
+    value: "WIFI:T:nopass;S:TRMNL;;"
+  - id: wifi_failed_qr
+    value: "https://help.usetrmnl.com/en/articles/10193157-device-wifi-troubleshooting"

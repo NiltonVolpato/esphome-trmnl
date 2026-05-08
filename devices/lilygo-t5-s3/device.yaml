@@ -11,9 +11,6 @@ substitutions:
   # User-overridable naming
   device_name: "lilygo"
   friendly_name: "Lilygo EPD47"
-  # WiFi credentials.
-  wifi_ssid: ""
-  wifi_password: ""
   # OTA credentials.
   ota_password: ""
 
@@ -46,14 +43,6 @@ ota:
   - platform: esphome
     password: ${ota_password}
     id: ota_esphome
-
-wifi:
-  ssid: ${wifi_ssid}
-  password: ${wifi_password}
-
-  ap:
-
-captive_portal:
 
 # External components for the ED047TC1 display driver
 external_components:

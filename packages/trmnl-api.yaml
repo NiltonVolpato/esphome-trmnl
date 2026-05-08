@@ -20,22 +20,23 @@ globals:
     restore_value: true
     initial_value: "900"
 
-wifi:
-  on_connect:
-    - logger.log: "WiFi connected, stopping wifi_setup script"
-    - script.stop: wifi_setup
-    - delay: 16ms
-    - logger.log: "Checking for stored credentials..."
-    - if:
-        condition:
-          lambda: |-
-            return id(device_id).empty() || id(api_key).empty();
+event:
+  - id: !extend wifi_connected
+    on_event:
+      - event_type: connected
         then:
-          - logger.log: "No stored credentials, running setup"
-          - script.execute: trmnl_setup
-        else:
-          - logger.log: "Stored credentials found, running update"
-          - script.execute: trmnl_update
+          - delay: 16ms
+          - logger.log: "Checking for stored credentials..."
+          - if:
+              condition:
+                lambda: |-
+                  return id(device_id).empty() || id(api_key).empty();
+              then:
+                - logger.log: "No stored credentials, running setup"
+                - script.execute: trmnl_setup
+              else:
+                - logger.log: "Stored credentials found, running update"
+                - script.execute: trmnl_update
 
 http_request:
   buffer_size_tx: 2048
@@ -84,6 +85,7 @@ script:
 #     "status": 200
 # }
   - id: trmnl_setup
+    mode: single
     then:
       - logger.log: "Setting up TRMNL — calling /api/setup"
       - http_request.get:
@@ -124,6 +126,7 @@ script:
 #     "update_firmware": null
 # }
   - id: trmnl_update
+    mode: single
     then:
       - logger.log: "Updating TRMNL image — calling /api/display"
       - http_request.get:
