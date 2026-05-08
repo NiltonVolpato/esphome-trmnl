@@ -22,15 +22,19 @@ globals:
 
 wifi:
   on_connect:
+    - logger.log: "WiFi connected, stopping wifi_setup script"
     - script.stop: wifi_setup
     - delay: 16ms
+    - logger.log: "Checking for stored credentials..."
     - if:
         condition:
           lambda: |-
             return id(device_id).empty() || id(api_key).empty();
         then:
+          - logger.log: "No stored credentials, running setup"
           - script.execute: trmnl_setup
         else:
+          - logger.log: "Stored credentials found, running update"
           - script.execute: trmnl_update
 
 http_request:
@@ -44,9 +48,13 @@ online_image:
     url: https://usetrmnl.com/images/setup/setup-logo.bmp
     resize: "${image_resize}"
     on_download_finished:
+      - logger.log: "Image download finished, showing page"
       - display.page.show: trmnl_page
       - component.update: trmnl_display
       - delay: 100ms
+      - logger.log:
+          format: "Entering deep sleep for %d seconds"
+          args: ['id(sleep_time)']
       - deep_sleep.enter:
           sleep_duration: !lambda 'return id(sleep_time) * 1000;'
 
@@ -77,7 +85,7 @@ script:
 # }
   - id: trmnl_setup
     then:
-      - logger.log: "Setting up TRMNL"
+      - logger.log: "Setting up TRMNL — calling /api/setup"
       - http_request.get:
           url: https://trmnl.app/api/setup
           request_headers:
@@ -91,6 +99,7 @@ script:
                 condition:
                   lambda: return response->status_code == 200;
                 then:
+                  - logger.log: "Setup response 200, parsing API key and device_id"
                   - lambda: |-
                       json::parse_json(body, [](JsonObject root) -> bool {
                         id(api_key) = root["api_key"].as<std::string>();
@@ -99,6 +108,7 @@ script:
                         return true;
                       });
                   - delay: 16ms  # lets the http_request component free up the reserved memory
+                  - logger.log: "Setup complete, starting update"
                   - script.execute: trmnl_update
 
 
@@ -115,7 +125,7 @@ script:
 # }
   - id: trmnl_update
     then:
-      - logger.log: "Updating TRMNL image"
+      - logger.log: "Updating TRMNL image — calling /api/display"
       - http_request.get:
           url: https://trmnl.app/api/display
           request_headers:
@@ -136,4 +146,5 @@ script:
                   return true;
                 });
             - delay: 16ms  # lets the http_request component free up the reserved memory
+            - logger.log: "Update complete, refreshing image"
             - component.update: trmnl_image

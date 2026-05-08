@@ -1,10 +1,17 @@
 # Shared cloud display pages — QR code setup screen, logo, images, and wifi_setup script
 # Included by packages/cloud-firmware.yaml alongside a device config.
 
+globals:
+  - id: wifi_setup_attempt
+    type: int
+    restore_value: false
+    initial_value: '0'
+
 esphome:
   on_boot:
     - priority: -100
       then:
+        - logger.log: "Booted, starting wifi_setup (18x10s poll, max 3 min)"
         - script.execute: wifi_setup
 
 # TODO: Update to use `!extend`. This seems to work but it's confusing.
@@ -62,27 +69,40 @@ script:
   - id: wifi_setup
     mode: restart
     then:
+      - logger.log: "wifi_setup: begin polling"
+      - lambda: "id(wifi_setup_attempt) = 0;"
       - repeat:
           count: 18
           then:
+            - lambda: "id(wifi_setup_attempt)++;"
+            - logger.log:
+                format: "wifi_setup: iteration %d/18"
+                args: ['id(wifi_setup_attempt)']
             - if:
                 condition: wifi.connected
                 then:
+                  - logger.log: "wifi_setup: WiFi already connected, exiting"
                   - script.stop: wifi_setup
+            - logger.log: "wifi_setup: waiting 10s..."
             - delay: 10s
             - if:
                 condition: wifi.connected
                 then:
+                  - logger.log: "wifi_setup: WiFi connected after delay, exiting"
                   - script.stop: wifi_setup
             - if:
                 condition: wifi.ap_active
                 then:
+                  - logger.log: "wifi_setup: AP active, setting QR code and showing wifi_connect"
                   - lambda: |-
                       id(wifi_connect_qr).set_value("WIFI:T:nopass;S:" + App.get_name() + ";;");
                   - display.page.show: wifi_connect
                   - component.update: trmnl_display
                   - script.stop: wifi_setup
+      - logger.log: "wifi_setup: timeout — no WiFi and no AP after 18 iterations"
+      - logger.log: "wifi_setup: showing sleep warning"
       - display.page.show: sleep_warning
       - component.update: trmnl_display
       - delay: 1s
+      - logger.log: "wifi_setup: entering deep sleep"
       - deep_sleep.enter:
