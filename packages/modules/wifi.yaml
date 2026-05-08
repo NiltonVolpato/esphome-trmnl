@@ -16,8 +16,8 @@ substitutions:
 
   # The total time to wait for WiFi setup will be `poll_attempts * poll_interval_seconds`.
   wifi_setup_poll_interval_seconds: "10"
-  wifi_setup_pool_attempts: "18"
-  _wifi_setup_timeout_seconds: "${wifi_setup_poll_interval_seconds | int * wifi_setup_pool_attempts | int}"
+  wifi_setup_poll_attempts: "18"
+  _wifi_setup_timeout_seconds: "${wifi_setup_poll_interval_seconds | int * wifi_setup_poll_attempts | int}"
 
   provisioned_wifi: !include
     file: wifi-provisioned.yaml
@@ -43,7 +43,7 @@ esphome:
   on_boot:
     - priority: -100
       then:
-        - logger.log: "Booted, starting wifi_setup ${wifi_setup_pool_attempts} attempts ${wifi_setup_poll_interval_seconds}s each"
+        - logger.log: "Booted, starting wifi_setup ${wifi_setup_poll_attempts} attempts ${wifi_setup_poll_interval_seconds}s each"
         - script.execute: wifi_setup
 
 event:
@@ -66,9 +66,9 @@ script:
       - logger.log: "wifi_setup: begin polling"
       - lambda: "id(wifi_connect_page_shown) = false;"
       - repeat:
-          count: ${wifi_setup_pool_attempts}
+          count: ${wifi_setup_poll_attempts}
           then:
-            - lambda: ESP_LOGI("wifi_setup", "iteration %d / ${wifi_setup_pool_attempts}", iteration);
+            - lambda: ESP_LOGI("wifi_setup", "iteration %d / ${wifi_setup_poll_attempts}", iteration);
             - if:
                 condition: wifi.connected
                 then:
