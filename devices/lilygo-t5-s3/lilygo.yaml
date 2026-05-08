@@ -13,6 +13,10 @@ esphome:
   name: lilygo
   friendly_name: Lilygo EPD47
   name_add_mac_suffix: true
+  platformio_options:
+    lib_ignore:
+      - Button2
+      - SensorLib
 
 esp32:
   board: esp32-s3-devkitc-1
