@@ -22,6 +22,7 @@ globals:
 
 wifi:
   on_connect:
+    - script.stop: wifi_setup
     - delay: 16ms
     - if:
         condition:

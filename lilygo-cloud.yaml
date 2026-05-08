@@ -1,52 +1,9 @@
-# Lilygo T5-ePaper-S3 cloud firmware
-# Device config + shared cloud logic + Lilygo-specific display pages
-packages:
-  device: !include devices/lilygo-t5-s3/lilygo.factory.yaml
-  cloud: !include packages/trmnl-cloud.yaml
+# Lilygo T5-ePaper-S3 cloud firmware — sets device_type + name, delegates everything else
+substitutions:
+  device_type: "lilygo-t5-s3"
 
 esphome:
   name: lilygo-cloud
-  # Dynamically set QR Code value for connecting to captive portal
-  on_boot:
-    - priority: 600
-      then:
-        - lambda: |-
-            id(wifi_connect_qr).set_value("WIFI:T:nopass;S:" + App.get_name() + ";;");
 
-display:
-  update_interval: never
-  pages:
-    - id: trmnl_page
-      lambda: |-
-        it.image(0, 0, id(trmnl_image), COLOR_OFF, COLOR_ON);
-    - id: logo
-      lambda: |-
-        it.image(0, 0, id(trmnl_logo));
-    - id: wifi_connect
-      lambda: |-
-        auto size = id(wifi_connect_qr).get_size() * 2;
-        auto x = (it.get_width() / 2) - (size / 2);
-        auto y = (it.get_height() / 2) - (size / 2);
-        it.qr_code(x, y, id(wifi_connect_qr), COLOR_ON, 2);
-    - id: wifi_failed
-      lambda: |-
-        auto size = id(wifi_failed_qr).get_size() * 2;
-        auto x = (it.get_width() / 2) - (size / 2);
-        auto y = (it.get_height() / 2) - (size / 2);
-        it.qr_code(x, y, id(wifi_failed_qr), COLOR_ON, 2);
-
-image:
-  - id: trmnl_logo
-    file: static/logo.bmp
-    type: BINARY
-
-qr_code:
-  - id: wifi_connect_qr
-    value: "WIFI:T:nopass;S:TRMNL;;"
-  - id: wifi_failed_qr
-    value: "https://help.usetrmnl.com/en/articles/10193157-device-wifi-troubleshooting"
-
-# Minimal deep_sleep config so the cloud script's deep_sleep.enter action is registered.
-# run_duration is a fallback; the cloud script sets sleep_duration dynamically from the API.
-deep_sleep:
-  run_duration: 5s
+packages:
+  firmware: !include packages/cloud-firmware.yaml

@@ -1,0 +1,70 @@
+# Shared cloud display pages — QR code setup screen, logo, images, and wifi_setup script
+# Included by packages/cloud-firmware.yaml alongside a device config.
+
+esphome:
+  on_boot:
+    - priority: -100
+      then:
+        - script.execute: wifi_setup
+
+display:
+  update_interval: never
+  pages:
+    - id: trmnl_page
+      lambda: |-
+        it.image(0, 0, id(trmnl_image), COLOR_OFF, COLOR_ON);
+    - id: logo
+      lambda: |-
+        it.image(0, 0, id(trmnl_logo));
+    - id: wifi_connect
+      lambda: |-
+        // "Scan to connect" at top
+        it.printf(it.get_width() / 2, 10, id(roboto_32), TextAlign::TOP_CENTER, "Scan to connect");
+        // QR code centered
+        auto size = id(wifi_connect_qr).get_size() * 2;
+        auto x = (it.get_width() / 2) - (size / 2);
+        auto y = (it.get_height() / 2) - (size / 2);
+        it.qr_code(x, y, id(wifi_connect_qr), COLOR_ON, 2);
+        // WiFi name at bottom
+        it.printf(it.get_width() / 2, it.get_height() - 5, id(roboto_16), TextAlign::BOTTOM_CENTER, "WiFi: %s", App.get_name().c_str());
+    - id: wifi_failed
+      lambda: |-
+        auto size = id(wifi_failed_qr).get_size() * 2;
+        auto x = (it.get_width() / 2) - (size / 2);
+        auto y = (it.get_height() / 2) - (size / 2);
+        it.qr_code(x, y, id(wifi_failed_qr), COLOR_ON, 2);
+    - id: sleep_warning
+      lambda: |-
+        it.printf(it.get_width() / 2, it.get_height() / 2 - 60, id(roboto_32), TextAlign::CENTER, "Setup timeout");
+        it.printf(it.get_width() / 2, it.get_height() / 2 - 15, id(roboto_16), TextAlign::CENTER, "Going to sleep...");
+        it.printf(it.get_width() / 2, it.get_height() / 2 + 30, id(roboto_16), TextAlign::CENTER, "Press button to wake");
+
+image:
+  - id: trmnl_logo
+    file: static/logo.bmp
+    type: BINARY
+
+qr_code:
+  - id: wifi_connect_qr
+    value: "WIFI:T:nopass;S:TRMNL;;"
+  - id: wifi_failed_qr
+    value: "https://help.usetrmnl.com/en/articles/10193157-device-wifi-troubleshooting"
+
+script:
+  - id: wifi_setup
+    mode: restart
+    then:
+      - repeat:
+          count: 30
+          then:
+            - delay: 10s
+            - if:
+                condition: wifi.ap_active
+                then:
+                  - lambda: |-
+                      id(wifi_connect_qr).set_value("WIFI:T:nopass;S:" + App.get_name() + ";;");
+                  - display.page.show: wifi_connect
+                  - component.update: trmnl_display
+                  - script.stop: wifi_setup
+      - display.page.show: sleep_warning
+      - component.update: trmnl_display

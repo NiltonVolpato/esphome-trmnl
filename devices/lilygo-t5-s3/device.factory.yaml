@@ -1,6 +1,6 @@
 packages:
   # Include all of the core configuration
-  core: !include lilygo.yaml
+  core: !include device.yaml
 
 esphome:
   # This will allow for project identification,
@@ -11,7 +11,7 @@ esphome:
 
 # This should point to the public location of the yaml file that will be adopted.
 dashboard_import:
-  package_import_url: github://NiltonVolpato/esphome-trmnl/devices/lilygo-t5-s3/lilygo.yaml@main
+  package_import_url: github://NiltonVolpato/esphome-trmnl/devices/lilygo-t5-s3/device.yaml@main
 
 improv_serial:
 

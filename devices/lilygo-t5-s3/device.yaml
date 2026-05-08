@@ -8,10 +8,13 @@ substitutions:
   image_resize: "960x540"
   # Wakeup pin for deep sleep (button on GPIO21)
   wakeup_pin: GPIO21
+  # User-overridable naming
+  device_name: "lilygo"
+  friendly_name: "Lilygo EPD47"
 
 esphome:
-  name: lilygo
-  friendly_name: Lilygo EPD47
+  name: ${device_name}
+  friendly_name: ${friendly_name}
   name_add_mac_suffix: true
   platformio_options:
     lib_ignore:
@@ -105,3 +108,8 @@ button:
   - platform: restart
     name: Restart
     id: restart_button
+
+# Lilygo T5-ePaper-S3 uses GPIO21 for both the back button and deep sleep
+# wakeup source. ESPHome does not allow the same pin to be shared between
+# binary_sensor and deep_sleep.wakeup_pin. The device will deep sleep via
+# the run_duration timer and API-driven sleep_duration instead.

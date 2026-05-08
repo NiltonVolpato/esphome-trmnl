@@ -1,3 +1,3 @@
 # TRMNL factory firmware — thin wrapper around device factory config
 packages:
-  device: !include devices/trmnl/trmnl.factory.yaml
+  device: !include devices/trmnl/device.factory.yaml

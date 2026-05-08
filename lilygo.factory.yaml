@@ -1,0 +1,3 @@
+# Lilygo T5-ePaper-S3 factory firmware — thin wrapper around device factory config
+packages:
+  device: !include devices/lilygo-t5-s3/device.factory.yaml

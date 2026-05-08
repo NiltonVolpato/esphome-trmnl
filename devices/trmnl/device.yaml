@@ -8,10 +8,13 @@ substitutions:
   image_resize: "800x480"
   # Wakeup pin for deep sleep (GPIO2 on TRMNL)
   wakeup_pin: GPIO2
+  # User-overridable naming
+  device_name: "trmnl"
+  friendly_name: "TRMNL"
 
 esphome:
-  name: trmnl
-  friendly_name: TRMNL
+  name: ${device_name}
+  friendly_name: ${friendly_name}
   # Automatically add the mac address to the name
   # so you can use a single firmware for all devices
   name_add_mac_suffix: true
@@ -95,3 +98,8 @@ button:
   - platform: restart
     name: Restart
     id: restart_button
+
+deep_sleep:
+  wakeup_pin:
+    number: ${wakeup_pin}
+    inverted: true
