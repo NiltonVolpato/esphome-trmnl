@@ -7,6 +7,8 @@ esphome:
       then:
         - script.execute: wifi_setup
 
+# TODO: Update to use `!extend`. This seems to work but it's confusing.
+#       There is a display here and another in device.yaml.
 display:
   update_interval: never
   pages:
@@ -83,4 +85,4 @@ script:
       - display.page.show: sleep_warning
       - component.update: trmnl_display
       - delay: 1s
-      - deep_sleep.enter: # TODO: actually should shutdown here instead.
+      - deep_sleep.enter:
