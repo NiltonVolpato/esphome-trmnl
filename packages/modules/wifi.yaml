@@ -68,9 +68,7 @@ script:
       - repeat:
           count: ${wifi_setup_pool_attempts}
           then:
-            - logger.log:
-                format: "wifi_setup: iteration %d/${wifi_setup_pool_attempts}"
-                args: ["iteration"]
+            - lambda: ESP_LOGI("wifi_setup", "iteration %d / ${wifi_setup_pool_attempts}", iteration);
             - if:
                 condition: wifi.connected
                 then:
@@ -87,7 +85,6 @@ script:
                       id(wifi_connect_qr).set_value("WIFI:T:nopass;S:" + App.get_name() + ";;");
                   - display.page.show: wifi_connect
                   - component.update: trmnl_display
-                  - script.stop: wifi_setup
       - if:
           condition: wifi.ap_active
           then:
@@ -127,9 +124,9 @@ display:
       lambda: |-
         int w = it.get_width();
         int h = it.get_height();
-        it.printf(w / 2, h / 2 - 60, id(sans_serif_large), TextAlign::CENTER, "Setup timeout");
-        it.printf(w / 2, h / 2 - 15, id(sans_serif_normal), TextAlign::CENTER, "Going to sleep...");
-        it.printf(w / 2, h / 2 + 30, id(sans_serif_normal), TextAlign::CENTER, "Press button to wake");
+        it.printf(w / 2, h / 2 - 100, id(sans_serif_large), TextAlign::CENTER, "Setup timeout");
+        it.printf(w / 2, h / 2, id(sans_serif_normal), TextAlign::CENTER, "Going to sleep...");
+        it.printf(w / 2, h / 2 + 50, id(sans_serif_normal), TextAlign::CENTER, "Press button to wake");
 
 qr_code:
   - id: wifi_connect_qr

@@ -51,7 +51,8 @@ display:
   id: trmnl_display
   cs_pin: GPIO6
   model: 7.50inv2
-  update_interval: 60s
+  update_interval: never
+  auto_clear_enabled: false
   dc_pin: GPIO5
   reset_pin: GPIO10
   busy_pin:
@@ -60,13 +61,8 @@ display:
   pages:
     - id: main_page
       lambda: |-
-        it.print(100, 100, id(sans_serif_large), "Hello ESPHome on TRMNL!");
-        it.printf(100, 200, id(sans_serif_large), "Uptime: %d seconds", millis() / 1000);
-
-        it.printf(750, 430, id(sans_serif_normal), TextAlign::BOTTOM_RIGHT, "Battery: %.2fV", id(battery_voltage).state);
-    - id: blank_page
-      lambda: |-
-        it.fill(COLOR_ON);
+        it.filled_rectangle(0, 0, it.get_width(), it.get_height(), COLOR_OFF);
+        it.printf(it.get_width() / 2, it.get_height() / 2, id(sans_serif_normal), TextAlign::CENTER, "Hello ESPHome");
 
 binary_sensor:
   - platform: gpio
