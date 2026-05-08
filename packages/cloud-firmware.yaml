@@ -1,20 +1,18 @@
 # Universal cloud firmware package — delivers everything for any supported device.
 #
-# Usage from a user config:
-#   substitutions:
-#     device_type: "lilygo-t5-s3"
-#   packages:
-#     firmware: !include packages/cloud-firmware.yaml
-#
+# Included by app.yaml (or a user config that sets device_type and variant).
 # Valid device_type values: "trmnl", "lilygo-t5-s3"
+# Valid variant values: "normal" (default), "factory"
 
 substitutions:
   device_type: "trmnl"
+  variant: "normal"
 
 packages:
-  device: !include ../devices/${device_type}/device.factory.yaml
+  device: !include ../devices/${device_type}/device.yaml
   api: !include trmnl-api.yaml
   display: !include cloud-display.yaml
+  extras: !include variants/${variant}.yaml
 
 deep_sleep:
   run_duration: 300s

@@ -33,8 +33,8 @@ void ED047TC1::setup() {
 }
 
 float ED047TC1::get_setup_priority() const { return setup_priority::PROCESSOR; }
-int ED047TC1::get_width_internal() { return this->get_width(); }
-int ED047TC1::get_height_internal() { return this->get_height(); }
+int ED047TC1::get_width_internal() { return 960; }
+int ED047TC1::get_height_internal() { return 540; }
 size_t ED047TC1::get_buffer_length_() {
     return this->get_width_internal() * this->get_height_internal() / 2;
 }

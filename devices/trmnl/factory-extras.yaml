@@ -1,0 +1,26 @@
+# Factory-extras for TRMNL — additive config for pre-adoption factory image.
+# Included by packages/variants/factory.yaml when variant=factory and device_type=trmnl.
+
+esphome:
+  project:
+    name: NiltonVolpato.esphome-trmnl
+    version: dev  # Replaced by CI with the release version
+
+dashboard_import:
+  package_import_url: github://NiltonVolpato/esphome-trmnl/app.yaml@main
+
+improv_serial:
+
+button:
+  - platform: factory_reset
+    name: Factory Reset
+    id: factory_reset_button
+
+binary_sensor:
+  - id: !extend back_button
+    on_multi_click:
+      - timing:
+          - ON for at least 3s
+          - OFF for at least 0.5s
+        then:
+          - button.press: factory_reset_button

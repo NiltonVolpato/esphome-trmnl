@@ -1,3 +1,0 @@
-# Lilygo T5-ePaper-S3 basic firmware — thin wrapper around device config
-packages:
-  device: !include devices/lilygo-t5-s3/device.yaml

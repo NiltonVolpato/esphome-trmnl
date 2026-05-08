@@ -1,3 +1,0 @@
-# TRMNL cloud factory firmware — thin wrapper
-packages:
-  cloud: !include trmnl-cloud.yaml

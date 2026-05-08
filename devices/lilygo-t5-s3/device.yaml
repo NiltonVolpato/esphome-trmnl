@@ -53,12 +53,12 @@ external_components:
     components: ["ed047tc1"]
 
 font:
-  - id: roboto_16
-    file: gfonts://Roboto
-    size: 16
-  - id: roboto_32
-    file: gfonts://Roboto
+  - id: sans_serif_normal
+    file: gfonts://Open+Sans@500
     size: 32
+  - id: sans_serif_large
+    file: gfonts://Open+Sans@500
+    size: 64
 
 # I2C bus for optional RTC (PCF8563) and touch
 i2c:
@@ -75,10 +75,10 @@ display:
   pages:
     - id: main_page
       lambda: |-
-        it.print(100, 100, id(roboto_32), "Hello ESPHome on Lilygo!");
-        it.printf(100, 200, id(roboto_32), "Uptime: %d seconds", millis() / 1000);
+        it.print(100, 100, id(sans_serif_large), "Hello ESPHome on Lilygo!");
+        it.printf(100, 200, id(sans_serif_large), "Uptime: %d seconds", millis() / 1000);
 
-        it.printf(910, 490, id(roboto_16), TextAlign::BOTTOM_RIGHT, "Battery: %.2fV", id(battery_voltage).state);
+        it.printf(910, 490, id(sans_serif_normal), TextAlign::BOTTOM_RIGHT, "Battery: %.2fV", id(battery_voltage).state);
     - id: blank_page
       lambda: |-
         it.fill(COLOR_ON);
@@ -90,6 +90,7 @@ binary_sensor:
     pin:
       number: GPIO21
       inverted: true
+      allow_other_uses: true
 
 sensor:
   # Battery voltage via ADC on GPIO14.
@@ -109,7 +110,8 @@ button:
     name: Restart
     id: restart_button
 
-# Lilygo T5-ePaper-S3 uses GPIO21 for both the back button and deep sleep
-# wakeup source. ESPHome does not allow the same pin to be shared between
-# binary_sensor and deep_sleep.wakeup_pin. The device will deep sleep via
-# the run_duration timer and API-driven sleep_duration instead.
+deep_sleep:
+  wakeup_pin:
+    number: ${wakeup_pin}
+    inverted: true
+    allow_other_uses: true

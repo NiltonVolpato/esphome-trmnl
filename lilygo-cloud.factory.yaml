@@ -1,3 +1,0 @@
-# Lilygo T5-ePaper-S3 cloud factory firmware — thin wrapper
-packages:
-  cloud: !include lilygo-cloud.yaml

@@ -1,9 +1,0 @@
-# Lilygo T5-ePaper-S3 cloud firmware — sets device_type + name, delegates everything else
-substitutions:
-  device_type: "lilygo-t5-s3"
-
-esphome:
-  name: lilygo-cloud
-
-packages:
-  firmware: !include packages/cloud-firmware.yaml

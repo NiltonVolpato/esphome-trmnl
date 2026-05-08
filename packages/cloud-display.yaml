@@ -18,26 +18,32 @@ display:
         it.image(0, 0, id(trmnl_logo));
     - id: wifi_connect
       lambda: |-
+        int w = it.get_width();
+        int h = it.get_height();
         // "Scan to connect" at top
-        it.printf(it.get_width() / 2, 10, id(roboto_32), TextAlign::TOP_CENTER, "Scan to connect");
+        it.printf(w / 2, 10, id(sans_serif_large), TextAlign::TOP_CENTER, "Scan to connect");
         // QR code centered
-        auto size = id(wifi_connect_qr).get_size() * 2;
-        auto x = (it.get_width() / 2) - (size / 2);
-        auto y = (it.get_height() / 2) - (size / 2);
-        it.qr_code(x, y, id(wifi_connect_qr), COLOR_ON, 2);
+        int scale = 8;
+        auto size = id(wifi_connect_qr).get_size() * scale;
+        auto x = (w / 2) - (size / 2);
+        auto y = (h / 2) - (size / 2);
+        it.qr_code(x, y, id(wifi_connect_qr), COLOR_ON, scale);
         // WiFi name at bottom
-        it.printf(it.get_width() / 2, it.get_height() - 5, id(roboto_16), TextAlign::BOTTOM_CENTER, "WiFi: %s", App.get_name().c_str());
+        it.printf(w / 2, h - 15, id(sans_serif_normal), TextAlign::BOTTOM_CENTER, "WiFi: %s", App.get_name().c_str());
     - id: wifi_failed
       lambda: |-
-        auto size = id(wifi_failed_qr).get_size() * 2;
+        int scale = 8;
+        auto size = id(wifi_failed_qr).get_size() * scale;
         auto x = (it.get_width() / 2) - (size / 2);
         auto y = (it.get_height() / 2) - (size / 2);
-        it.qr_code(x, y, id(wifi_failed_qr), COLOR_ON, 2);
+        it.qr_code(x, y, id(wifi_failed_qr), COLOR_ON, scale);
     - id: sleep_warning
       lambda: |-
-        it.printf(it.get_width() / 2, it.get_height() / 2 - 60, id(roboto_32), TextAlign::CENTER, "Setup timeout");
-        it.printf(it.get_width() / 2, it.get_height() / 2 - 15, id(roboto_16), TextAlign::CENTER, "Going to sleep...");
-        it.printf(it.get_width() / 2, it.get_height() / 2 + 30, id(roboto_16), TextAlign::CENTER, "Press button to wake");
+        int w = it.get_width();
+        int h = it.get_height();
+        it.printf(w / 2, h / 2 - 60, id(sans_serif_large), TextAlign::CENTER, "Setup timeout");
+        it.printf(w / 2, h / 2 - 15, id(sans_serif_normal), TextAlign::CENTER, "Going to sleep...");
+        it.printf(w / 2, h / 2 + 30, id(sans_serif_normal), TextAlign::CENTER, "Press button to wake");
 
 image:
   - id: trmnl_logo
@@ -55,9 +61,17 @@ script:
     mode: restart
     then:
       - repeat:
-          count: 30
+          count: 18
           then:
+            - if:
+                condition: wifi.connected
+                then:
+                  - script.stop: wifi_setup
             - delay: 10s
+            - if:
+                condition: wifi.connected
+                then:
+                  - script.stop: wifi_setup
             - if:
                 condition: wifi.ap_active
                 then:
@@ -68,3 +82,5 @@ script:
                   - script.stop: wifi_setup
       - display.page.show: sleep_warning
       - component.update: trmnl_display
+      - delay: 1s
+      - deep_sleep.enter: # TODO: actually should shutdown here instead.

@@ -1,0 +1,5 @@
+# TRMNL Cloud Firmware — universal entry point for any supported device.
+---
+packages:
+  firmware: !include packages/cloud-firmware.yaml
+...

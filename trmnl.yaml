@@ -1,3 +1,0 @@
-# TRMNL basic firmware — thin wrapper around device config
-packages:
-  device: !include devices/trmnl/device.yaml

@@ -1,9 +1,0 @@
-# TRMNL cloud firmware — sets device_type + name, delegates everything else
-substitutions:
-  device_type: "trmnl"
-
-esphome:
-  name: trmnl-cloud
-
-packages:
-  firmware: !include packages/cloud-firmware.yaml
