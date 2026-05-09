@@ -38,9 +38,11 @@ font:
   - id: sans_serif_normal
     file: gfonts://Open+Sans@500
     size: 32
+    bpp: 4
   - id: sans_serif_large
     file: gfonts://Open+Sans@500
     size: 64
+    bpp: 4
 
 spi:
   mosi_pin: GPIO8
