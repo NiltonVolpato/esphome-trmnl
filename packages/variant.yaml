@@ -1,0 +1,5 @@
+substitutions:
+  variant: "normal"
+
+packages:
+  variant: !include variants/${variant}.yaml

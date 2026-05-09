@@ -1,5 +1,7 @@
 # TRMNL Cloud Firmware — universal entry point for any supported device.
----
+
 packages:
-  firmware: !include packages/cloud-firmware.yaml
-...
+  device: !include devices/${device_type}.yaml
+  wifi: !include packages/wifi.yaml
+  api: !include packages/trmnl-api.yaml
+  extras: !include packages/variant.yaml

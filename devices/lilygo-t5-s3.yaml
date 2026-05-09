@@ -1,0 +1,62 @@
+# Lilygo T5-ePaper-S3 (EPD47) hardware configuration
+# ESP32-S3 + ED047TC1 parallel e-paper display (960x540, 16 grayscale)
+
+substitutions:
+  # Display properties (overridable by cloud wrapper)
+  display_width: "960"
+  display_height: "540"
+  image_resize: "960x540"
+  # Wakeup pin for deep sleep (button on GPIO21)
+  wakeup_pin: GPIO21
+  # User-overridable naming
+  device_name: "lilygo"
+  friendly_name: "Lilygo EPD47"
+  # OTA credentials.
+  ota_password: ""
+
+packages:
+  base_pkg: !include base.yaml
+
+esp32:
+  board: esp32-s3-devkitc-1
+  variant: esp32s3
+
+psram:
+  mode: octal
+
+# External components for the ED047TC1 display driver
+external_components:
+  - source:
+      type: local
+      path: components/
+    components: ["ed047tc1"]
+
+# I2C bus for optional RTC (PCF8563) and touch
+i2c:
+  sda: GPIO18
+  scl: GPIO17
+  frequency: 100kHz
+  scan: false
+
+display:
+  platform: ed047tc1
+  greyscale: true
+
+binary_sensor:
+  - id: !extend main_button
+    pin:
+      number: GPIO21
+      inverted: true
+      allow_other_uses: true
+
+sensor:
+  # Battery voltage via ADC on GPIO14.
+  # On the standard Lilygo T5-ePaper-S3, battery is read via GPIO14.
+  - id: !extend battery_voltage
+    pin: GPIO14
+
+deep_sleep:
+  wakeup_pin:
+    number: ${wakeup_pin}
+    inverted: true
+    allow_other_uses: true

@@ -10,10 +10,6 @@ substitutions:
 
 packages:
   device: !include ../devices/${device_type}/device.yaml
-  wifi: !include modules/wifi.yaml
+  wifi: !include wifi/wifi.yaml
   api: !include trmnl-api.yaml
-  display: !include cloud-display.yaml
   extras: !include variants/${variant}.yaml
-
-deep_sleep:
-  run_duration: 300s

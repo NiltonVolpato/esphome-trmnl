@@ -20,6 +20,12 @@ globals:
     restore_value: true
     initial_value: "900"
 
+display:
+  pages:
+    - id: trmnl_page
+      lambda: |-
+        it.image(0, 0, id(trmnl_image), COLOR_OFF, COLOR_ON);
+
 event:
   - id: !extend wifi_connected
     on_event:

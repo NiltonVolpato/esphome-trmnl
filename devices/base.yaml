@@ -1,26 +1,17 @@
-# TRMNL hardware configuration
-# ESP32-C3 + Waveshare 7.50inv2 e-paper display (800x480 B&W)
-
 substitutions:
-  # Display properties (overridable by cloud wrapper)
-  display_width: "800"
-  display_height: "480"
-  image_resize: "800x480"
-  # Wakeup pin for deep sleep (GPIO2 on TRMNL)
-  wakeup_pin: GPIO2
-  # User-overridable naming
   device_name: "trmnl"
   friendly_name: "TRMNL"
+  ota_password: ""
 
 esphome:
   name: ${device_name}
   friendly_name: ${friendly_name}
+
   # Automatically add the mac address to the name
   # so you can use a single firmware for all devices
   name_add_mac_suffix: true
 
 esp32:
-  board: esp32-c3-devkitm-1
   framework:
     type: esp-idf
 
@@ -33,7 +24,11 @@ api:
 # OTA is required for Over-the-Air updating
 ota:
   - platform: esphome
+    password: ${ota_password}
+    id: ota_esphome
 
+# Fonts available using generic names, so it's easy to update the actual font
+# without having to change all the references in the code.
 font:
   - id: sans_serif_normal
     file: gfonts://Open+Sans@500
@@ -44,52 +39,39 @@ font:
     size: 64
     bpp: 4
 
-spi:
-  mosi_pin: GPIO8
-  clk_pin: GPIO7
-
+# We expect all devices to have a display. We set some common attributes here,
+# like the "id" and other common settings, but the actual display component
+# (model, pins, etc) should be defined in the device-specific YAML file.
 display:
-  platform: waveshare_epaper
   id: trmnl_display
-  cs_pin: GPIO6
-  model: 7.50inv2
   update_interval: never
   auto_clear_enabled: false
-  dc_pin: GPIO5
-  reset_pin: GPIO10
-  busy_pin:
-    number: GPIO4
-    inverted: true
   pages:
     - id: main_page
       lambda: |-
         it.filled_rectangle(0, 0, it.get_width(), it.get_height(), COLOR_OFF);
         it.printf(it.get_width() / 2, it.get_height() / 2, id(sans_serif_normal), TextAlign::CENTER, "Hello ESPHome");
 
+# Main button. Pin should be overriden per device.
 binary_sensor:
-  - platform: gpio
-    name: Button
-    id: back_button
-    pin:
-      number: GPIO9
-      inverted: true
+  - id: main_button
+    platform: gpio
+    name: Main Button
 
+# Battery voltage via ADC. Pin should be overriden per device.
 sensor:
-  - platform: adc
+  - id: battery_voltage
+    platform: adc
     name: Battery Voltage
-    id: battery_voltage
-    pin: GPIO3
     attenuation: 12db
     samples: 128
     filters:
       - multiply: 2.0
 
 button:
-  - platform: restart
+  - id: restart_button
+    platform: restart
     name: Restart
-    id: restart_button
 
 deep_sleep:
-  wakeup_pin:
-    number: ${wakeup_pin}
-    inverted: true
+  run_duration: 300s

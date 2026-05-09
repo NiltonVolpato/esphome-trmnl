@@ -19,11 +19,13 @@ substitutions:
   wifi_setup_poll_attempts: "18"
   _wifi_setup_timeout_seconds: "${wifi_setup_poll_interval_seconds | int * wifi_setup_poll_attempts | int}"
 
-  provisioned_wifi: !include
-    file: wifi-provisioned.yaml
+  __provisioned_wifi:
+    wifi:
+      ssid: ${wifi_ssid}
+      password: ${wifi_password}
 
 packages:
-  provisioned_wifi_pkg: ${ provisioned_wifi if wifi_ssid else {} }
+  provisioned_wifi_pkg: ${ __provisioned_wifi if wifi_ssid else {} }
 
 wifi:
   id: wifi_id
@@ -131,5 +133,7 @@ display:
 qr_code:
   - id: wifi_connect_qr
     value: "WIFI:T:nopass;S:TRMNL;;"
+    ecc: MEDIUM
   - id: wifi_failed_qr
     value: "https://help.usetrmnl.com/en/articles/10193157-device-wifi-troubleshooting"
+    ecc: MEDIUM

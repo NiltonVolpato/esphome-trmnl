@@ -32,6 +32,7 @@ CONFIG_SCHEMA = cv.All(
 
 async def to_code(config):
     cg.add_platformio_option("lib_compat_mode", "off")
+    cg.add_platformio_option("lib_ignore", ["Button2", "SensorLib"])
     cg.add_library(
         "LilyGoEPD47",
         repository="https://github.com/Xinyuan-LilyGO/LilyGo-EPD47",

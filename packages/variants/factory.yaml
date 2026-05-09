@@ -1,7 +1,26 @@
 # Factory variant — adds pre-adoption / factory-flash extras.
 # Includes project metadata, dashboard import URL, improv_serial, and factory_reset.
-#
-# Requires the ${device_type} substitution to be set (provided by cloud-firmware.yaml).
 
-packages:
-  factory_extras: !include ../../devices/${device_type}/factory-extras.yaml
+esphome:
+  project:
+    name: NiltonVolpato.esphome-trmnl-lilygo
+    version: dev
+
+dashboard_import:
+  package_import_url: github://NiltonVolpato/esphome-trmnl/app.yaml@main
+
+improv_serial:
+
+button:
+  - id: factory_reset_button
+    platform: factory_reset
+    name: Factory Reset
+
+binary_sensor:
+  - id: !extend main_button
+    on_multi_click:
+      - timing:
+          - ON for at least 3s
+          - OFF for at least 0.5s
+        then:
+          - button.press: factory_reset_button
