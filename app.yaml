@@ -4,4 +4,5 @@ packages:
   device: !include devices/${device_type}.yaml
   wifi: !include packages/wifi.yaml
   api: !include packages/trmnl-api.yaml
+  screen: !include packages/unregistered-screen.yaml
   extras: !include packages/variant.yaml

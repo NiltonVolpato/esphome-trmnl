@@ -19,6 +19,10 @@ globals:
     type: uint32_t
     restore_value: true
     initial_value: "900"
+  - id: api_has_image
+    type: bool
+    restore_value: no
+    initial_value: "false"
 
 display:
   pages:
@@ -63,6 +67,9 @@ online_image:
           args: ["id(sleep_time)"]
       - deep_sleep.enter:
           sleep_duration: !lambda "return id(sleep_time) * 1000;"
+    on_error:
+      - logger.log: "Image download/decoding failed, showing fallback screen"
+      - script.execute: ${unregistered_screen_script}
 
 sensor:
   - id: !extend battery_voltage
@@ -116,6 +123,12 @@ script:
                   - delay: 16ms # lets the http_request component free up the reserved memory
                   - logger.log: "Setup complete, starting update"
                   - script.execute: trmnl_update
+                else:
+                  - logger.log: "TRMNL Setup failed with non-200 status"
+                  - script.execute: ${unregistered_screen_script}
+          on_error:
+            - logger.log: "TRMNL Setup HTTP request failed"
+            - script.execute: ${unregistered_screen_script}
 
   # /api/display
   # {
@@ -144,13 +157,25 @@ script:
                 format: "TRMNL Update Response: %s"
                 args: [body.c_str()]
             - lambda: |-
+                id(api_has_image) = false;
                 json::parse_json(body, [](JsonObject root) -> bool {
-                  if (root["status"].as<int>() == 0) {
+                  if (root["status"].as<int>() == 0 && root["image_url"].is<std::string>()) {
                     id(trmnl_image).set_url(root["image_url"].as<std::string>());
                     id(sleep_time) = root["refresh_rate"].as<uint32_t>();
+                    id(api_has_image) = true;
                   }
                   return true;
                 });
-            - delay: 16ms # lets the http_request component free up the reserved memory
-            - logger.log: "Update complete, refreshing image"
-            - component.update: trmnl_image
+            - if:
+                condition:
+                  lambda: return id(api_has_image);
+                then:
+                  - delay: 16ms # lets the http_request component free up the reserved memory
+                  - logger.log: "Update complete, refreshing image"
+                  - component.update: trmnl_image
+                else:
+                  - logger.log: "No image assigned"
+                  - script.execute: ${unregistered_screen_script}
+          on_error:
+            - logger.log: "TRMNL Update HTTP request failed"
+            - script.execute: ${unregistered_screen_script}

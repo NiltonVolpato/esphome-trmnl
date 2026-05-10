@@ -2,6 +2,8 @@ substitutions:
   device_name: "trmnl"
   friendly_name: "TRMNL"
   ota_password: ""
+  timezone: "UTC"
+  unregistered_screen_script: "show_fuzzy_clock"
 
 esphome:
   name: ${device_name}
