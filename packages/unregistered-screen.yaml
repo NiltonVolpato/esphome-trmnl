@@ -9,6 +9,10 @@
 # to a different script ID to use a different fallback screen at build time
 # without changing trmnl-api.yaml.
 
+esphome:
+  includes:
+    - packages/unregistered-screen.h
+
 time:
   - platform: sntp
     id: sntp_time
@@ -59,95 +63,26 @@ display:
         int mid = h / 2;
 
         // Clear the frame
-        it.filled_rectangle(0, 0, w, h, COLOR_OFF);
+        // it.filled_rectangle(0, 0, w, h, COLOR_OFF);
 
         // Render fuzzy clock (only when time is synced)
-        auto time = id(sntp_time).now();
+        const esphome::ESPTime& time = id(sntp_time).now();
+        it.strftime(w / 2, 10, id(sans_serif_normal), TextAlign::TOP_CENTER, "%Y-%m-%d %H:%M:%S", time);
         if (time.is_valid()) {
-          int hour = time.hour;     // 0-23
-          int minute = time.minute; // 0-59
-
-          // Convert to 12-hour
-          int hour12 = hour % 12;
-          int next_hour12 = (hour12 + 1) % 12;
-
-          static const char* hour_words[] = {
-            "twelve", "one", "two", "three", "four", "five",
-            "six", "seven", "eight", "nine", "ten", "eleven"
-          };
-
-          const char* relation;
-          const char* hour_word;
-          bool single_line = false;
-
-          if (minute <= 2) {
-            relation = "o'clock";
-            hour_word = hour_words[hour12];
-            single_line = true;
-          } else if (minute <= 7) {
-            relation = "five past";
-            hour_word = hour_words[hour12];
-          } else if (minute <= 12) {
-            relation = "ten past";
-            hour_word = hour_words[hour12];
-          } else if (minute <= 17) {
-            relation = "quarter past";
-            hour_word = hour_words[hour12];
-          } else if (minute <= 22) {
-            relation = "twenty past";
-            hour_word = hour_words[hour12];
-          } else if (minute <= 27) {
-            relation = "twenty-five past";
-            hour_word = hour_words[hour12];
-          } else if (minute <= 32) {
-            relation = "half past";
-            hour_word = hour_words[hour12];
-          } else if (minute <= 37) {
-            relation = "twenty-five to";
-            hour_word = hour_words[next_hour12];
-          } else if (minute <= 42) {
-            relation = "twenty to";
-            hour_word = hour_words[next_hour12];
-          } else if (minute <= 47) {
-            relation = "quarter to";
-            hour_word = hour_words[next_hour12];
-          } else if (minute <= 52) {
-            relation = "ten to";
-            hour_word = hour_words[next_hour12];
-          } else if (minute <= 57) {
-            relation = "five to";
-            hour_word = hour_words[next_hour12];
-          } else {
-            // 58-59
-            relation = "o'clock";
-            hour_word = hour_words[next_hour12];
-            single_line = true;
-          }
-
-          if (single_line) {
-            // Whole phrase in large font, centered
-            it.printf(w / 2, mid, id(sans_serif_large), TextAlign::CENTER,
-                      "%s %s", hour_word, relation);
-          } else {
-            // Two lines: relation in normal font, hour in large font
-            it.printf(w / 2, mid - 30, id(sans_serif_normal), TextAlign::CENTER,
-                      "%s", relation);
-            it.printf(w / 2, mid + 20, id(sans_serif_large), TextAlign::CENTER,
-                      "%s", hour_word);
-          }
+          display_fuzzy_time(it, time);
         }
 
         // Render MAC address at bottom-left
-        it.printf(10, h - 10, id(sans_serif_normal), TextAlign::BOTTOM_LEFT,
+        it.printf(20, h - 10, id(sans_serif_normal), TextAlign::BOTTOM_LEFT,
                   "%s", id(mac_address_sensor).state.c_str());
 
         // Render battery percentage at bottom-right, guard against NaN
         float batt = id(battery_percentage).state;
         if (isnan(batt)) {
-          it.printf(w - 10, h - 10, id(sans_serif_normal), TextAlign::BOTTOM_RIGHT,
+          it.printf(w - 20, h - 10, id(sans_serif_normal), TextAlign::BOTTOM_RIGHT,
                     "--");
         } else {
-          it.printf(w - 10, h - 10, id(sans_serif_normal), TextAlign::BOTTOM_RIGHT,
+          it.printf(w - 20, h - 10, id(sans_serif_normal), TextAlign::BOTTOM_RIGHT,
                     "%.0f%%", batt);
         }
 
@@ -155,8 +90,29 @@ script:
   - id: show_fuzzy_clock
     mode: single
     then:
+      - if:
+          condition:
+            lambda: 'return !id(sntp_time).now().is_valid();'
+          then:
+            - logger.log: "Time not synced yet, waiting..."
+            - wait_until:
+                condition:
+                  time.has_time:
+                timeout: 30s
+          else:
+            - logger.log: "Time is available and valid."
+      - if:
+          condition:
+            lambda: 'return !id(sntp_time).now().is_valid();'
+          then:
+            - logger.log: "Time still not synced, showing fallback screen without time."
+          else:
+            - logger.log: "Time is now synced, showing fuzzy clock."
       - display.page.show: fuzzy_clock_page
       - component.update: trmnl_display
-      - delay: 100ms
+      - delay: 16ms
+      - logger.log:
+          format: "Entering deep sleep for %d seconds"
+          args: ["id(sleep_time)"]
       - deep_sleep.enter:
           sleep_duration: !lambda "return id(sleep_time) * 1000;"
