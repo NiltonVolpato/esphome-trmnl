@@ -48,11 +48,16 @@ display:
   id: trmnl_display
   update_interval: never
   auto_clear_enabled: false
+  show_test_card: true
   pages:
     - id: main_page
       lambda: |-
-        it.filled_rectangle(0, 0, it.get_width(), it.get_height(), COLOR_OFF);
-        it.printf(it.get_width() / 2, it.get_height() / 2, id(sans_serif_normal), TextAlign::CENTER, "Hello ESPHome");
+        const int w = it.get_width();
+        const int h = it.get_height();
+        ESP_LOGI("main_page", "Resolution: %dx%d", w, h);
+
+        it.filled_rectangle(0, 0, w, h, COLOR_OFF);
+        it.printf(w / 2, h / 2, id(sans_serif_normal), TextAlign::CENTER, "Hello ESPHome");
 
 # Main button. Pin should be overriden per device.
 binary_sensor:

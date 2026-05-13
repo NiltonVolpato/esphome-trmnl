@@ -1,0 +1,16 @@
+# A firmware that can run on Wokwi.
+substitutions:
+  device_type: "wokwi"
+  device_name: "test-wokwi"
+  friendly_name: "Test Wokwi"
+
+wifi:
+  ssid: "Wokwi-GUEST"
+
+packages:
+  app: !include app.yaml
+
+# Force logs to UART0 so Wokwi serial monitor always sees ESPHome logs.
+logger:
+  hardware_uart: UART0
+  baud_rate: 115200

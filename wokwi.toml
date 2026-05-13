@@ -1,0 +1,11 @@
+[wokwi]
+version = 1
+firmware = ".esphome/build/test-wokwi/.pioenvs/test-wokwi/firmware.bin"
+elf = ".esphome/build/test-wokwi/.pioenvs/test-wokwi/firmware.elf"
+rfc2217ServerPort = 4000
+
+[wokwi.flash]
+bootloader = ".esphome/build/test-wokwi/.pioenvs/test-wokwi/bootloader.bin"
+partition_table = ".esphome/build/test-wokwi/.pioenvs/test-wokwi/partitions.bin"
+otadata = ".esphome/build/test-wokwi/.pioenvs/test-wokwi/ota_data_initial.bin"
+app = ".esphome/build/test-wokwi/.pioenvs/test-wokwi/firmware.bin"

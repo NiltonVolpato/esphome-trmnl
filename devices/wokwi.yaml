@@ -1,0 +1,55 @@
+# TRMNL-OG Wokwi simulation profile
+# Uses wokwi-ili9341 (240x320 color LCD) for simulation
+
+substitutions:
+  # Display properties for ILI9341
+  display_width: "240"
+  display_height: "320"
+  image_resize: "240x320"
+  # Wakeup pin for deep sleep
+  wakeup_pin: GPIO2
+  # User-overridable naming
+  device_name: "trmnl-wokwi"
+  friendly_name: "TRMNL Wokwi"
+
+packages:
+  base_pkg: !include base.yaml
+
+esp32:
+  board: esp32-s3-devkitc-1
+
+i2c:
+  sda: GPIO0
+  scl: GPIO1
+
+spi:
+  mosi_pin: GPIO8
+  clk_pin: GPIO7
+
+display:
+  platform: mipi_spi
+  model: ILI9341
+  cs_pin: GPIO6
+  dc_pin: GPIO5
+  reset_pin: GPIO10
+  invert_colors: true
+  # Split into 4 chunks so each SPI transfer is ~38KB instead of 153KB.
+  # This prevents the watchdog from firing during screen updates.
+  # The drawing lambda will be called once per chunk, so avoid side effects.
+  buffer_size: 100%
+  rotation: 90
+
+binary_sensor:
+  - id: !extend main_button
+    pin:
+      number: GPIO9
+      inverted: true
+
+sensor:
+  - id: !extend battery_voltage
+    pin: GPIO3
+
+deep_sleep:
+  wakeup_pin:
+    number: ${wakeup_pin}
+    inverted: true
