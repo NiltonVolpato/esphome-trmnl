@@ -94,8 +94,8 @@ script:
             - display.page.show: sleep_warning
             - component.update: trmnl_display
             - delay: 2s
-            - logger.log: "wifi_timeout: entering deep sleep"
-            - deep_sleep.enter:
+            - logger.log: "wifi_timeout: entering sleep"
+            - script.execute: enter_deep_sleep
           else:
             - logger.log: "wifi_timeout: no longer in AP mode, exiting cleanly"
 

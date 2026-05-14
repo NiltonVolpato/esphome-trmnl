@@ -65,8 +65,7 @@ online_image:
       - logger.log:
           format: "Entering deep sleep for %d seconds"
           args: ["id(sleep_time)"]
-      - deep_sleep.enter:
-          sleep_duration: !lambda "return id(sleep_time) * 1000;"
+      - script.execute: enter_deep_sleep
     on_error:
       - logger.log: "Image download/decoding failed, showing fallback screen"
       - script.execute: ${unregistered_screen_script}

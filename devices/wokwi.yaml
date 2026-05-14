@@ -49,6 +49,16 @@ sensor:
   - id: !extend battery_voltage
     pin: GPIO3
 
+# Example on how to customize the deep sleep script.
+script:
+  - id: !remove enter_deep_sleep
+  - id: enter_deep_sleep
+    mode: single
+    then:
+      - logger.log: "Entering deep sleep customized"
+      - deep_sleep.enter:
+          sleep_duration: !lambda "return id(sleep_time) * 1000;"
+
 deep_sleep:
   wakeup_pin:
     number: ${wakeup_pin}

@@ -92,7 +92,7 @@ script:
     then:
       - if:
           condition:
-            lambda: 'return !id(sntp_time).now().is_valid();'
+            lambda: "return !id(sntp_time).now().is_valid();"
           then:
             - logger.log: "Time not synced yet, waiting..."
             - wait_until:
@@ -103,7 +103,7 @@ script:
             - logger.log: "Time is available and valid."
       - if:
           condition:
-            lambda: 'return !id(sntp_time).now().is_valid();'
+            lambda: "return !id(sntp_time).now().is_valid();"
           then:
             - logger.log: "Time still not synced, showing fallback screen without time."
           else:
@@ -114,5 +114,4 @@ script:
       - logger.log:
           format: "Entering deep sleep for %d seconds"
           args: ["id(sleep_time)"]
-      - deep_sleep.enter:
-          sleep_duration: !lambda "return id(sleep_time) * 1000;"
+      - script.execute: enter_deep_sleep

@@ -80,5 +80,12 @@ button:
     platform: restart
     name: Restart
 
+script:
+  - id: enter_deep_sleep
+    mode: single
+    then:
+      - deep_sleep.enter:
+          sleep_duration: !lambda "return id(sleep_time) * 1000;"
+
 deep_sleep:
   run_duration: 300s
