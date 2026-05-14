@@ -1,4 +1,4 @@
-# TRMNL Cloud Firmware — universal entry point for any supported device.
+# Universal entry point for any supported device.
 
 packages:
   device: !include devices/${device_type}.yaml

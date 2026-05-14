@@ -4,6 +4,9 @@
 # Required substitutions (set by device config):
 #   image_resize: e.g. "800x480" or "960x540"
 
+substitutions:
+  base_url: "https://trmnl.app"
+
 globals:
   - id: device_id
     type: std::string
@@ -28,7 +31,11 @@ display:
   pages:
     - id: trmnl_page
       lambda: |-
-        it.image(0, 0, id(trmnl_image), COLOR_OFF, COLOR_ON);
+        ESP_LOGI("trmnl_page", "Image: %dx%d, Display: %dx%d",
+                id(trmnl_image).get_width(), id(trmnl_image).get_height(),
+                it.get_width(), it.get_height());
+        it.rectangle(0, 0, it.get_width(), it.get_height(), COLOR_ON);
+        it.image(0, 0, id(trmnl_image));
 
 event:
   - id: !extend wifi_connected
@@ -53,10 +60,10 @@ http_request:
 
 online_image:
   - id: trmnl_image
-    format: bmp
+    format: PNG
     type: BINARY
-    url: https://usetrmnl.com/images/setup/setup-logo.bmp
-    resize: "${image_resize}"
+    url: https://example.com/placeholder.png
+    # resize: "${image_resize}"
     on_download_finished:
       - logger.log: "Image download finished, showing page"
       - display.page.show: trmnl_page
@@ -90,8 +97,8 @@ script:
   # {
   #     "api_key": "...",
   #     "friendly_id": "...",
-  #     "image_url": "https://usetrmnl.com/images/setup/setup-logo.bmp",
-  #     "message": "Register at usetrmnl.com/signup with Device ID '...'",
+  #     "image_url": "https://example.com/images/setup/setup-logo.bmp",
+  #     "message": "Device registered successfully",
   #     "status": 200
   # }
   - id: trmnl_setup
@@ -99,7 +106,7 @@ script:
     then:
       - logger.log: "Setting up TRMNL — calling /api/setup"
       - http_request.get:
-          url: https://trmnl.app/api/setup
+          url: ${base_url}/api/setup
           request_headers:
             ID: !lambda "return id(mac_address_sensor).state.c_str();"
           capture_response: true
@@ -132,9 +139,9 @@ script:
   # /api/display
   # {
   #     "filename": "....bmp",
-  #     "firmware_url": "https://trmnl.s3.us-east-2.amazonaws.com/FW1.4.5.bin",
-  #     "image_url": "https://trmnl.s3.us-east-2.amazonaws.com/...",
-  #     "refresh_rate": 903,
+  #     "firmware_url": "https://example.com/FW1.4.5.bin",
+  #     "image_url": "https://example.com/...",
+  #     "refresh_rate": 900,
   #     "reset_firmware": false,
   #     "special_function": "identify",
   #     "status": 0,
@@ -145,7 +152,7 @@ script:
     then:
       - logger.log: "Updating TRMNL image — calling /api/display"
       - http_request.get:
-          url: https://trmnl.app/api/display
+          url: ${base_url}/api/display
           request_headers:
             ID: !lambda "return id(mac_address_sensor).state.c_str();"
             Access-Token: !lambda "return id(api_key).c_str();"

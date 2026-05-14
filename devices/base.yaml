@@ -48,8 +48,10 @@ display:
   id: trmnl_display
   update_interval: never
   auto_clear_enabled: false
-  show_test_card: true
   pages:
+    - id: blank_page
+      lambda: |-
+        it.filled_rectangle(0, 0, it.get_width(), it.get_height(), COLOR_OFF);
     - id: main_page
       lambda: |-
         const int w = it.get_width();

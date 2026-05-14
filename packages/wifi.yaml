@@ -117,11 +117,9 @@ display:
         it.printf(w / 2, h - 15, id(sans_serif_normal), TextAlign::BOTTOM_CENTER, "WiFi: %s", App.get_name().c_str());
     - id: wifi_failed
       lambda: |-
-        int scale = 8;
-        auto size = id(wifi_failed_qr).get_size() * scale;
-        auto x = (it.get_width() / 2) - (size / 2);
-        auto y = (it.get_height() / 2) - (size / 2);
-        it.qr_code(x, y, id(wifi_failed_qr), COLOR_ON, scale);
+        int w = it.get_width();
+        int h = it.get_height();
+        it.printf(w / 2, h / 2, id(sans_serif_large), TextAlign::CENTER, "Failed to connect to WiFi");
     - id: sleep_warning
       lambda: |-
         int w = it.get_width();
@@ -133,7 +131,4 @@ display:
 qr_code:
   - id: wifi_connect_qr
     value: "WIFI:T:nopass;S:TRMNL;;"
-    ecc: MEDIUM
-  - id: wifi_failed_qr
-    value: "https://help.usetrmnl.com/en/articles/10193157-device-wifi-troubleshooting"
     ecc: MEDIUM
