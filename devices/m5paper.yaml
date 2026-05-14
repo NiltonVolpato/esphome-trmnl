@@ -1,0 +1,125 @@
+# M5 Paper hardware configuration
+# ESP32 + IT8951E e-paper (960x540) + BM8563 RTC + IP5306 power management
+
+substitutions:
+  # Display properties (overridable by cloud wrapper)
+  display_width: "960"
+  display_height: "540"
+  image_resize: "960x540"
+  # User-overridable naming
+  device_name: "m5paper"
+  friendly_name: "M5 Paper"
+
+packages:
+  base_pkg: !include base.yaml
+
+esp32:
+  board: m5stack-grey
+  framework:
+    type: arduino
+    advanced:
+      minimum_chip_revision: "3.0"
+      sram1_as_iram: true
+
+psram:
+
+# External components for IT8951E display and M5Paper power management
+# (BM8563 RTC is built into ESPHome)
+external_components:
+  - source:
+      type: git
+      url: https://github.com/Passific/m5paper_esphome
+    components: [it8951e, m5paper]
+
+spi:
+  clk_pin: GPIO14
+  mosi_pin: GPIO12
+  miso_pin: GPIO13
+
+i2c:
+  sda: GPIO21
+  scl: GPIO22
+  frequency: 100kHz
+  scan: false
+
+display:
+  platform: it8951e
+  cs_pin: GPIO15
+  reset_pin: GPIO23
+  busy_pin: GPIO27
+  model: M5EPD
+  sleep_when_done: true
+  full_update_every: 1 # was 60
+
+binary_sensor:
+  - id: !extend main_button
+    pin:
+      number: GPIO38
+      inverted: true
+      allow_other_uses: true
+  - id: right_button
+    platform: gpio
+    name: "${friendly_name} Right Button"
+    pin:
+      number: GPIO37
+      inverted: true
+  - id: left_button
+    platform: gpio
+    name: "${friendly_name} Left Button"
+    pin:
+      number: GPIO39
+      inverted: true
+
+sensor:
+  - id: !extend battery_voltage
+    pin: GPIO35
+    attenuation: 11db
+
+# BM8563 RTC — required for hardware alarm wakeup.
+# update_interval: never because the firmware uses SNTP for timekeeping;
+# the RTC component is still needed so bm8563.start_timer can arm the alarm.
+time:
+  - platform: bm8563
+    id: rtc_time
+    update_interval: never
+
+m5paper:
+  battery_power_pin: GPIO5
+  main_power_pin: GPIO2
+  allow_esphome_deep_sleep: true
+
+# Override the default enter_deep_sleep script from base.yaml.
+# Instead of ESP32 deep_sleep, use BM8563 RTC alarm + power shutdown.
+script:
+  - id: !remove enter_deep_sleep
+  - id: enter_deep_sleep
+    mode: single
+    then:
+      - bm8563.start_timer:
+          id: rtc_time
+          duration: !lambda "return id(sleep_time);"
+      - lambda: |-
+          // Wait for IT8951 busy pin (GPIO27) to go high = refresh complete
+          pinMode(27, INPUT);
+          while (!digitalRead(27)) {
+            delay(10);
+          }
+          ESP_LOGD("m5paper", "IT8951 refresh complete");
+      - delay: 10s
+      - m5paper.shutdown_main_power
+
+# Deep-sleep fallback — overrides base.yaml's run_duration: 300s.
+# If the custom script never runs (e.g. hang), the device won't enter
+# an unrecoverable sleep. GPIO38 (physical power button) can always wake it.
+deep_sleep:
+  run_duration: 24h
+  wakeup_pin:
+    number: GPIO38
+    inverted: true
+    allow_other_uses: true
+
+# Periodically sync the RTC from system time to keep the hardware alarm accurate.
+interval:
+  - interval: 1h
+    then:
+      - bm8563.write_time
